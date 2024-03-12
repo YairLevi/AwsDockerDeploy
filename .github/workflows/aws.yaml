@@ -6,7 +6,7 @@ on:
       - "*"
 
 jobs:
-  build-and-upload-to-ecr:
+  deploy:
     runs-on: ubuntu-latest
     environment:
       name: prod  # Optional: Set an environment name for clarity
@@ -28,7 +28,7 @@ jobs:
         run: |
           docker build -t ${{ secrets.AWS_ECR_IMAGE }} .
 
-      - name: Delete old image
+      - name: Delete old image from ECR
         run: |
           aws ecr batch-delete-image --repository-name first-node-docker --image-ids imageTag=latest
 
@@ -36,7 +36,7 @@ jobs:
         run: |
           docker push ${{ secrets.AWS_ECR_IMAGE }}
 
-      - name: Install Docker on EC2 instance via SSH
+      - name: Install Docker on EC2 if needed, via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.AWS_EC2_HOST }}
@@ -51,7 +51,23 @@ jobs:
               sudo service docker start
               sudo usermod -a -G docker ${{ secrets.AWS_EC2_USERNAME }}
             fi
+            
+      - name: Stop and remove old container
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.AWS_EC2_HOST }}
+          username: ${{ secrets.AWS_EC2_USERNAME }}
+          key: ${{ secrets.AWS_SSH_KEY }}
+          script: |
             docker stop $(docker ps -aqf "ancestor=${{ secrets.AWS_ECR_IMAGE }}")
             docker rm $(docker ps -aqf "ancestor=${{ secrets.AWS_ECR_IMAGE }}")
+
+      - name: Start new container
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.AWS_EC2_HOST }}
+          username: ${{ secrets.AWS_EC2_USERNAME }}
+          key: ${{ secrets.AWS_SSH_KEY }}
+          script: |
             docker pull ${{ secrets.AWS_ECR_IMAGE }}
             docker run -d -p 8000:8000 ${{ secrets.AWS_ECR_IMAGE }}
