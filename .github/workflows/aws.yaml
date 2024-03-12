@@ -47,9 +47,10 @@ jobs:
               sudo service docker start
               sudo usermod -a -G docker ${{ secrets.AWS_EC2_USERNAME }}
             fi
-            docker pull ${{ secrets.AWS_ECR_IMAGE }}:latest
-            docker run -d -p 8000:8000 ${{ secrets.AWS_ECR_IMAGE }}:latest
-
+            docker stop $(docker ps -aqf "ancestor=${{ secrets.AWS_ECR_IMAGE }}")
+            docker rm $(docker ps -aqf "ancestor=${{ secrets.AWS_ECR_IMAGE }}")
+            docker pull ${{ secrets.AWS_ECR_IMAGE }}
+            docker run -d -p 8000:8000 ${{ secrets.AWS_ECR_IMAGE }}
 #      - name: Build image and upload to ECR
 #        run: |
 #          aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 975695045761.dkr.ecr.eu-central-1.amazonaws.com
