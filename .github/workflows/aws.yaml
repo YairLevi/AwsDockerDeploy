@@ -2,7 +2,8 @@ name: Build, Push, Deploy to AWS
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - "*"
 
 jobs:
   build-and-upload-to-ecr:
