@@ -28,6 +28,10 @@ jobs:
         run: |
           docker build -t ${{ secrets.AWS_ECR_IMAGE }} .
 
+      - name: Delete old image
+        run: |
+          aws ecr batch-delete-image --repository-name first-node-docker --image-ids imageTag=latest
+
       - name: Push to ECR
         run: |
           docker push ${{ secrets.AWS_ECR_IMAGE }}
