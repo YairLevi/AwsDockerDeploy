@@ -46,21 +46,16 @@ jobs:
           host: ${{ secrets.AWS_EC2_HOST }}
           username: ${{ secrets.AWS_EC2_USERNAME }}
           key: ~/.ssh/id_rsa
-
-      - name: Install Docker if not installed
-        script: |
-          if [ -x "$(command -v docker)" ]; then
-            echo "Update docker"
-          else
-            echo "Install docker"
-            sudo yum install docker -y
-            sudo service docker start
-            sudo usermod -a -G docker ec2-user
-          fi
-
-      - name: Print D
-        run: |
-          docker -v
+          script: |
+            if [ -x "$(command -v docker)" ]; then
+              echo "Update docker"
+            else
+              echo "Install docker"
+              sudo yum install docker -y
+              sudo service docker start
+              sudo usermod -a -G docker ec2-user
+            fi
+            docker -v
 #      - name: Build image and upload to ECR
 #        run: |
 #          aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 975695045761.dkr.ecr.eu-central-1.amazonaws.com
