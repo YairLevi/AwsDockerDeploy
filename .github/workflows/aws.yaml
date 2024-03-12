@@ -1,0 +1,73 @@
+name: Build, Push, Deploy to AWS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: prod  # Optional: Set an environment name for clarity
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configure AWS CLI
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2.0.1
+
+      - name: Build the image
+        run: |
+          docker build -t ${{ secrets.AWS_ECR_IMAGE }} .
+
+      - name: Delete old image from ECR
+        run: |
+          aws ecr batch-delete-image --repository-name first-node-docker --image-ids imageTag=latest
+
+      - name: Push to ECR
+        run: |
+          docker push ${{ secrets.AWS_ECR_IMAGE }}
+
+      - name: Install Docker on EC2 if needed, via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.AWS_EC2_HOST }}
+          username: ${{ secrets.AWS_EC2_USERNAME }}
+          key: ${{ secrets.AWS_SSH_KEY }}
+          script: |
+            if [ -x "$(command -v docker)" ]; then
+              echo "Update docker"
+            else
+              echo "Install docker"
+              sudo yum install docker -y
+              sudo service docker start
+              sudo usermod -a -G docker ${{ secrets.AWS_EC2_USERNAME }}
+            fi
+
+      - name: Stop and remove old container
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.AWS_EC2_HOST }}
+          username: ${{ secrets.AWS_EC2_USERNAME }}
+          key: ${{ secrets.AWS_SSH_KEY }}
+          script: |
+            docker stop $(docker ps -aqf "ancestor=${{ secrets.AWS_ECR_IMAGE }}")
+            docker rm $(docker ps -aqf "ancestor=${{ secrets.AWS_ECR_IMAGE }}")
+
+      - name: Start new container
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.AWS_EC2_HOST }}
+          username: ${{ secrets.AWS_EC2_USERNAME }}
+          key: ${{ secrets.AWS_SSH_KEY }}
+          script: |
+            docker pull ${{ secrets.AWS_ECR_IMAGE }}
+            docker run -d -p 8000:8000 ${{ secrets.AWS_ECR_IMAGE }}
