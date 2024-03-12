@@ -51,15 +51,3 @@ jobs:
             docker rm $(docker ps -aqf "ancestor=${{ secrets.AWS_ECR_IMAGE }}")
             docker pull ${{ secrets.AWS_ECR_IMAGE }}
             docker run -d -p 8000:8000 ${{ secrets.AWS_ECR_IMAGE }}
-#      - name: Build image and upload to ECR
-#        run: |
-#          aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 975695045761.dkr.ecr.eu-central-1.amazonaws.com
-#          docker build -t first-node-docker .
-#          docker tag first-node-docker:latest 975695045761.dkr.ecr.eu-central-1.amazonaws.com/first-node-docker:latest
-#          docker push 975695045761.dkr.ecr.eu-central-1.amazonaws.com/first-node-docker:latest
-#
-#      - name: Prepare EC2 instance
-#        run: |
-#          docker stop 975695045761.dkr.ecr.eu-central-1.amazonaws.com/first-node-docker:latest
-#
-#      - name:
