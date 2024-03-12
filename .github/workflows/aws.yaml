@@ -32,20 +32,20 @@ jobs:
         run: |
           docker push ${{ secrets.AWS_ECR_IMAGE }}
 
-#      - name: Prepare EC2 ssh key
-#        env:
-#          SSH_PRIVATE_KEY: ${{ secrets.AWS_SSH_KEY }}
-#        run: |
-#            mkdir -p ~/.ssh
-#            echo $SSH_PRIVATE_KEY > ~/.ssh/id_rsa
-#            chmod 600 ~/.ssh/id_rsa
+      - name: Prepare EC2 ssh key
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.AWS_SSH_KEY }}
+        run: |
+            mkdir -p ~/.ssh
+            echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/id_rsa
 
       - name: Connect to EC2 instance via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.AWS_EC2_HOST }}
           username: ${{ secrets.AWS_EC2_USERNAME }}
-          key: ${{ secrets.AWS_SSH_KEY }}
+          key_path: ~/.ssh/id_rsa
           script: |
             if [ -x "$(command -v docker)" ]; then
               echo "Update docker"
