@@ -12,5 +12,9 @@ func main() {
 		return c.String(200, "Golang!")
 	})
 
+	server.GET("/what", func(c echo.Context) error {
+		return c.String(200, "What?")
+	})
+
 	log.Fatal(server.Start(":8000"))
 }
