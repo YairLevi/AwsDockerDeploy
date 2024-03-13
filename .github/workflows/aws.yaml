@@ -3,7 +3,7 @@ name: Build, Push, Deploy to AWS
 on:
   push:
     branches:
-      - '*'
+      - main
 
 jobs:
   deploy:
@@ -26,7 +26,7 @@ jobs:
 
       - name: Build the image
         run: |
-          docker build -t ${{ secrets.AWS_ECR_IMAGE }} .
+          docker build -t ${{ secrets.AWS_ECR_IMAGE }} . --no-cache
 
       - name: Delete old image from ECR
         run: |
@@ -59,8 +59,14 @@ jobs:
           username: ${{ secrets.AWS_EC2_USERNAME }}
           key: ${{ secrets.AWS_SSH_KEY }}
           script: |
-            docker stop $(docker ps -aqf "ancestor=${{ secrets.AWS_ECR_IMAGE }}")
-            docker rm $(docker ps -aqf "ancestor=${{ secrets.AWS_ECR_IMAGE }}")
+            count=$(docker ps -q | wc -l)
+            if [ $count -gt 0 ]; then
+              docker stop $(docker ps -aqf "ancestor=${{ secrets.AWS_ECR_IMAGE }}")
+              docker rm $(docker ps -aqf "ancestor=${{ secrets.AWS_ECR_IMAGE }}")
+              docker rmi ${{ secrets.AWS_ECR_IMAGE }}
+            else
+              echo "No running containers found."
+            fi
 
       - name: Start new container
         uses: appleboy/ssh-action@v1.0.3
