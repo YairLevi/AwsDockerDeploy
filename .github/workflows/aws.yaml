@@ -26,7 +26,7 @@ jobs:
 
       - name: Build the image
         run: |
-          docker build -t ${{ secrets.AWS_ECR_IMAGE }} .
+          docker build -t ${{ secrets.AWS_ECR_IMAGE }} . --no-cache
 
       - name: Delete old image from ECR
         run: |
