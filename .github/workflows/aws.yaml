@@ -68,6 +68,16 @@ jobs:
               echo "No running containers found."
             fi
 
+      - name: Get new ECR AWS token
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.AWS_EC2_HOST }}
+          username: ${{ secrets.AWS_EC2_USERNAME }}
+          key: ${{ secrets.AWS_SSH_KEY }}
+          script: |
+            GITHUB_REPO=$(echo "${{ secrets.AWS_ECR_IMAGE }}" | sed 's/:latest$//')
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin $GITHUB_REPO
+
       - name: Start new container
         uses: appleboy/ssh-action@v1.0.3
         with:

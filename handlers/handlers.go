@@ -8,7 +8,7 @@ import (
 type Handler struct{}
 
 func (h *Handler) Hello(c echo.Context) error {
-	return c.String(http.StatusOK, "Hello from handler")
+	return c.String(http.StatusOK, "Hello from handler 2")
 }
 
 func (h *Handler) Goodbye(c echo.Context) error {
